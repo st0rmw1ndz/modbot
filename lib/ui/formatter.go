@@ -19,26 +19,23 @@ package ui
 import "fmt"
 
 const (
-	Kibibyte = 1
-	Mebibyte = 1024 * Kibibyte
-	Gibibyte = 1024 * Mebibyte
+	kibibyte = 1
+	mebibyte = 1024 * kibibyte
+	gibibyte = 1024 * mebibyte
 )
 
-func PrettifySize(sizeKiB uint64, decimalPlaces uint8) string {
+func PrettifySize(sizeKibibytes uint64, decimalPlaces uint8) string {
 	var size float64
 	var unit string
 
-	if sizeKiB < Kibibyte {
-		size = float64(sizeKiB)
-		unit = "B"
-	} else if sizeKiB < Mebibyte {
-		size = float64(sizeKiB)
+	if sizeKibibytes < mebibyte {
+		size = float64(sizeKibibytes)
 		unit = "KiB"
-	} else if sizeKiB < Gibibyte {
-		size = float64(sizeKiB) / float64(Mebibyte)
+	} else if sizeKibibytes < gibibyte {
+		size = float64(sizeKibibytes) / float64(mebibyte)
 		unit = "MiB"
 	} else {
-		size = float64(sizeKiB) / float64(Gibibyte)
+		size = float64(sizeKibibytes) / float64(gibibyte)
 		unit = "GiB"
 	}
 

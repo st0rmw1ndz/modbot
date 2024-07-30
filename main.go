@@ -24,6 +24,11 @@ import (
 	"codeberg.org/frosty/sysinfo/lib/ui"
 )
 
+const (
+	memoryDecimalPlaces   = 2
+	cpuUsageDecimalPlaces = 2
+)
+
 func main() {
 	osInfo, err := readers.ReadOs()
 	if err != nil {
@@ -35,11 +40,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("%v\n", err)
 	}
-	fmt.Printf("RAM: %v / %v\n", ui.PrettifySize(memoryInfo.Used, 2), ui.PrettifySize(memoryInfo.Total, 2))
+	fmt.Printf("RAM: %v / %v\n", ui.PrettifySize(memoryInfo.Used, memoryDecimalPlaces), ui.PrettifySize(memoryInfo.Total, memoryDecimalPlaces))
 
 	cpuUsageInfo, err := readers.ReadCpuUsage()
 	if err != nil {
 		log.Fatalf("%v\n", err)
 	}
-	fmt.Printf("CPU: %.*f%%\n", 2, cpuUsageInfo.UsagePercent)
+	fmt.Printf("CPU: %.*f%%\n", cpuUsageDecimalPlaces, cpuUsageInfo.UsagePercent)
 }
