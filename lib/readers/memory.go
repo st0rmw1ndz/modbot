@@ -1,0 +1,80 @@
+// sysinfo queries information about your system
+// Copyright (C) 2024 frosty <inthishouseofcards@gmail.com>
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published
+// by the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+package readers
+
+import (
+	"bufio"
+	"errors"
+	"fmt"
+	"os"
+	"strconv"
+	"strings"
+)
+
+type MemoryInfo struct {
+	Total     uint64
+	Available uint64
+	Used      uint64
+}
+
+func ReadMemory() (MemoryInfo, error) {
+	file, err := os.Open("/proc/meminfo")
+	if err != nil {
+		return MemoryInfo{}, err
+	}
+	defer file.Close()
+
+	var memTotal, memAvailable uint64
+	scanner := bufio.NewScanner(file)
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		columns := strings.Fields(line)
+
+		if len(columns) < 2 {
+			continue
+		}
+
+		value, err := strconv.ParseUint(columns[1], 10, 64)
+		if err != nil {
+			return MemoryInfo{}, fmt.Errorf("failed to parse memory value: %w", err)
+		}
+
+		switch {
+		case strings.HasPrefix(line, "MemTotal:"):
+			memTotal = value
+		case strings.HasPrefix(line, "MemAvailable:"):
+			memAvailable = value
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return MemoryInfo{}, err
+	}
+	if memTotal == 0 {
+		return MemoryInfo{}, errors.New("missing MemTotal")
+	}
+	if memAvailable == 0 {
+		return MemoryInfo{}, errors.New("missing MemAvailable")
+	}
+
+	return MemoryInfo{
+		Total:     memTotal,
+		Available: memAvailable,
+		Used:      memTotal - memAvailable,
+	}, nil
+}
