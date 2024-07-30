@@ -21,6 +21,7 @@ import (
 	"log"
 
 	"codeberg.org/frosty/sysinfo/lib/readers"
+	"codeberg.org/frosty/sysinfo/lib/ui"
 )
 
 func main() {
@@ -34,7 +35,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("%v\n", err)
 	}
-	fmt.Printf("RAM: %v / %v\n", PrettifySize(memoryInfo.Used, 2), PrettifySize(memoryInfo.Total, 2))
+	fmt.Printf("RAM: %v / %v\n", ui.PrettifySize(memoryInfo.Used, 2), ui.PrettifySize(memoryInfo.Total, 2))
 
 	cpuUsageInfo, err := readers.ReadCpuUsage()
 	if err != nil {
