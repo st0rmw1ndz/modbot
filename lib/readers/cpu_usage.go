@@ -1,4 +1,4 @@
-// sysinfo queries information about your system
+// modbot is a system information agregator
 // Copyright (C) 2024 frosty <inthishouseofcards@gmail.com>
 //
 // This program is free software: you can redistribute it and/or modify

@@ -1,4 +1,4 @@
-// sysinfo queries information about your system
+// modbot is a system information agregator
 // Copyright (C) 2024 frosty <inthishouseofcards@gmail.com>
 //
 // This program is free software: you can redistribute it and/or modify
@@ -20,13 +20,16 @@ import (
 	"fmt"
 	"log"
 
-	"codeberg.org/frosty/sysinfo/lib/readers"
-	"codeberg.org/frosty/sysinfo/lib/ui"
+	"codeberg.org/frosty/modbot/lib/readers"
+	"codeberg.org/frosty/modbot/lib/ui"
 )
 
 const (
-	memoryDecimalPlaces   = 2
-	cpuUsageDecimalPlaces = 2
+	MemoryDecimalPlaces     = 2
+	CpuUsageDecimalPlaces   = 2
+	CpuTemperatureHwmonName = "hwmon6"
+	CpuTemperatureTempName  = "temp1"
+	BatteryName             = "BAT1"
 )
 
 func main() {
@@ -40,11 +43,33 @@ func main() {
 	if err != nil {
 		log.Fatalf("%v\n", err)
 	}
-	fmt.Printf("RAM: %v / %v\n", ui.PrettifySize(memoryInfo.Used, memoryDecimalPlaces), ui.PrettifySize(memoryInfo.Total, memoryDecimalPlaces))
+	fmt.Printf("RAM: %v / %v\n", ui.PrettifyKib(memoryInfo.Used, MemoryDecimalPlaces), ui.PrettifyKib(memoryInfo.Total, MemoryDecimalPlaces))
 
 	cpuUsageInfo, err := readers.ReadCpuUsage()
 	if err != nil {
 		log.Fatalf("%v\n", err)
 	}
-	fmt.Printf("CPU: %.*f%%\n", cpuUsageDecimalPlaces, cpuUsageInfo.UsagePercent)
+	cpuTemperatureInfo, err := readers.ReadCpuTemperature(CpuTemperatureHwmonName, CpuTemperatureTempName)
+	if err != nil {
+		log.Fatalf("%v\n", err)
+	}
+	fmt.Printf("CPU: %.1f°C (%.*f%%)\n", cpuTemperatureInfo, CpuUsageDecimalPlaces, cpuUsageInfo.UsagePercent)
+
+	loadInfo, err := readers.ReadLoad()
+	if err != nil {
+		log.Fatalf("%v\n", err)
+	}
+	fmt.Printf("Load: %v %v %v\n", loadInfo.OneMinute, loadInfo.FiveMinute, loadInfo.FifteenMinute)
+
+	// batteryInfo, err := readers.ReadBattery(BatteryName)
+	// if err != nil {
+	// 	log.Fatalf("%v\n", err)
+	// }
+	// fmt.Printf("Battery: %v%% (%v) w/ %v\n", batteryInfo.Capacity, batteryInfo.Status, batteryInfo.Technology)
+
+	uptimeInfo, err := readers.ReadUptime()
+	if err != nil {
+		log.Fatalf("%v\n", err)
+	}
+	fmt.Printf("Uptime: %v\n", uptimeInfo)
 }

@@ -1,4 +1,4 @@
-module codeberg.org/frosty/sysinfo
+module codeberg.org/frosty/modbot
 
 go 1.22.4
 

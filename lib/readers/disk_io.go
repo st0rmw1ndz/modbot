@@ -14,34 +14,4 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package ui
-
-import "fmt"
-
-const (
-	Kibibyte = 1
-	Mebibyte = 1024 * Kibibyte
-	Gibibyte = 1024 * Mebibyte
-	Tebibyte = 1024 * Gibibyte
-)
-
-func PrettifyKib(sizeKibibytes uint64, decimalPlaces uint8) string {
-	var size float64
-	var unit string
-
-	if sizeKibibytes < Mebibyte {
-		size = float64(sizeKibibytes)
-		unit = "KiB"
-	} else if sizeKibibytes < Gibibyte {
-		size = float64(sizeKibibytes) / float64(Mebibyte)
-		unit = "MiB"
-	} else if sizeKibibytes < Tebibyte {
-		size = float64(sizeKibibytes) / float64(Gibibyte)
-		unit = "GiB"
-	} else {
-		size = float64(sizeKibibytes) / float64(Tebibyte)
-		unit = "TiB"
-	}
-
-	return fmt.Sprintf(fmt.Sprintf("%%.%df %s", decimalPlaces, unit), size)
-}
+package readers

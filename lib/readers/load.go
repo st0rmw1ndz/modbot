@@ -18,63 +18,41 @@ package readers
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"os"
-	"strconv"
 	"strings"
 )
 
-type MemoryInfo struct {
-	Total     uint64
-	Available uint64
-	Used      uint64
+type LoadInfo struct {
+	OneMinute     string
+	FiveMinute    string
+	FifteenMinute string
 }
 
-func ReadMemory() (MemoryInfo, error) {
-	file, err := os.Open("/proc/meminfo")
+func ReadLoad() (LoadInfo, error) {
+	const loadPath = "/proc/loadavg"
+
+	file, err := os.Open(loadPath)
 	if err != nil {
-		return MemoryInfo{}, err
+		return LoadInfo{}, fmt.Errorf("failed to open %s: %w", loadPath, err)
 	}
 	defer file.Close()
 
-	var memTotal, memAvailable uint64
 	scanner := bufio.NewScanner(file)
-
-	for scanner.Scan() {
-		line := scanner.Text()
-		columns := strings.Fields(line)
-
-		if len(columns) < 2 {
-			continue
-		}
-
-		value, err := strconv.ParseUint(columns[1], 10, 64)
-		if err != nil {
-			return MemoryInfo{}, fmt.Errorf("failed to parse memory value: %w", err)
-		}
-
-		switch {
-		case strings.HasPrefix(line, "MemTotal:"):
-			memTotal = value
-		case strings.HasPrefix(line, "MemAvailable:"):
-			memAvailable = value
-		}
-	}
-
+	scanner.Scan()
 	if err := scanner.Err(); err != nil {
-		return MemoryInfo{}, err
-	}
-	if memTotal == 0 {
-		return MemoryInfo{}, errors.New("missing MemTotal")
-	}
-	if memAvailable == 0 {
-		return MemoryInfo{}, errors.New("missing MemAvailable")
+		return LoadInfo{}, fmt.Errorf("failed to read from %s: %w", loadPath, err)
 	}
 
-	return MemoryInfo{
-		Total:     memTotal,
-		Available: memAvailable,
-		Used:      memTotal - memAvailable,
+	line := scanner.Text()
+	fields := strings.Fields(line)
+	if len(fields) < 3 {
+		return LoadInfo{}, fmt.Errorf("unexpected format in %s: %s", loadPath, line)
+	}
+
+	return LoadInfo{
+		OneMinute:     fields[0],
+		FiveMinute:    fields[1],
+		FifteenMinute: fields[2],
 	}, nil
 }
