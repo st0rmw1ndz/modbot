@@ -6,6 +6,8 @@ Each part of the output is a module, and modbot is an agregator for these module
 
 The modules that are in the output are determined at compile time, within the `config.go` file. Don't worry-this process uses a straightforward syntax that doesn't require any programming knowledge. Though, if you're using this, I assume you're smart enough to know that.
 
+modbot is made to be forked, edited, and added onto. If you don't like how something is formatted or looks, you should change it! Go is a very simple and straightforward language, so it should've be too difficult for non-experienced users.
+
 ## Attributions
 
 This project was inspired by [gocaudices](https://github.com/LordRusk/gocaudices), which I've used in the past. I created this to be window manager and status bar agnostic, in addition to allowing more options for where the input comes from.
