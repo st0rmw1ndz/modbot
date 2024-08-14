@@ -25,7 +25,7 @@ import (
 
 type CpuTemperatureInfo float32
 
-func ReadCpuTemperature(hwmonName, tempName string) (CpuTemperatureInfo, error) {
+func ReadCpuTemperature(hwmonName, tempName string) (interface{}, error) {
 	tempPath := fmt.Sprintf("/sys/class/hwmon/%s/%s_input", hwmonName, tempName)
 
 	file, err := os.Open(tempPath)

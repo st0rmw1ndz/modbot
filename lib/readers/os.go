@@ -29,7 +29,7 @@ type OsInfo struct {
 	Version    string
 }
 
-func ReadOs() (OsInfo, error) {
+func ReadOs() (interface{}, error) {
 	const osPath = "/lib/os-release"
 
 	file, err := os.Open(osPath)

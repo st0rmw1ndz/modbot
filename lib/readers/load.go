@@ -29,7 +29,11 @@ type LoadInfo struct {
 	FifteenMinute string
 }
 
-func ReadLoad() (LoadInfo, error) {
+func (l LoadInfo) String() string {
+	return fmt.Sprintf("%v %v %v", l.OneMinute, l.FiveMinute, l.FifteenMinute)
+}
+
+func ReadLoad() (interface{}, error) {
 	const loadPath = "/proc/loadavg"
 
 	file, err := os.Open(loadPath)

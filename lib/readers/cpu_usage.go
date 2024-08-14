@@ -30,7 +30,11 @@ type CpuUsageInfo struct {
 	UsagePercent float64
 }
 
-func ReadCpuUsage() (CpuUsageInfo, error) {
+func (cu CpuUsageInfo) String() string {
+	return fmt.Sprintf("%d%%", uint(cu.UsagePercent))
+}
+
+func ReadCpuUsage() (interface{}, error) {
 	file, err := os.Open("/proc/stat")
 	if err != nil {
 		return CpuUsageInfo{}, err

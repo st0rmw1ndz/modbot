@@ -23,22 +23,28 @@ import (
 	"os"
 	"strconv"
 	"strings"
+
+	"codeberg.org/frosty/modbot/lib/ui"
 )
 
 type MemoryInfo struct {
 	Total     uint64
 	Available uint64
 	Used      uint64
+
+	TotalPretty     string
+	AvailablePretty string
+	UsedPretty      string
 }
 
-func ReadMemory() (MemoryInfo, error) {
+func ReadMemory() (interface{}, error) {
 	file, err := os.Open("/proc/meminfo")
 	if err != nil {
 		return MemoryInfo{}, err
 	}
 	defer file.Close()
 
-	var memTotal, memAvailable uint64
+	var memTotal, memAvailable, memUsed uint64
 	scanner := bufio.NewScanner(file)
 
 	for scanner.Scan() {
@@ -72,9 +78,14 @@ func ReadMemory() (MemoryInfo, error) {
 		return MemoryInfo{}, errors.New("missing MemAvailable")
 	}
 
+	memUsed = memTotal - memAvailable
 	return MemoryInfo{
 		Total:     memTotal,
 		Available: memAvailable,
-		Used:      memTotal - memAvailable,
+		Used:      memUsed,
+
+		TotalPretty:     ui.PrettifyKib(memTotal, 2),
+		AvailablePretty: ui.PrettifyKib(memAvailable, 2),
+		UsedPretty:      ui.PrettifyKib(memUsed, 2),
 	}, nil
 }

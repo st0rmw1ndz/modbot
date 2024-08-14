@@ -116,7 +116,7 @@ func BatteryTechnologyFromStr(technologyStr string) BatteryTechnology {
 	return TechnologyUnknown
 }
 
-func ReadBattery(batteryName string) (BatteryInfo, error) {
+func ReadBattery(batteryName string) (interface{}, error) {
 	capacityPath := fmt.Sprintf("/sys/class/power_supply/%s/capacity", batteryName)
 	statusPath := fmt.Sprintf("/sys/class/power_supply/%s/status", batteryName)
 	technologyPath := fmt.Sprintf("/sys/class/power_supply/%s/technology", batteryName)

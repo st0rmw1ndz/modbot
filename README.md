@@ -11,3 +11,5 @@ modbot is made to be forked, edited, and added onto. If you don't like how somet
 ## Attributions
 
 This project was inspired by [gocaudices](https://github.com/LordRusk/gocaudices), which I've used in the past. I created this to be window manager and status bar agnostic, in addition to allowing more options for where the input comes from.
+
+Some ideas for how special cases should be handled were taken from [mblocks](https://gitlab.com/mhdy/mblocks), which is another great project in the same vein as this.
