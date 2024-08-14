@@ -1,6 +1,6 @@
 # modbot
 
-modbot is a seriously over-engineered system for querying different information about your system. Often used for a status bar like [dzen](https://github.com/robm/dzen) or [lemonbar](https://github.com/LemonBoy/bar).
+modbot is a seriously over-engineered system for querying different information about your system. Often used with a status bar like [dzen](https://github.com/robm/dzen) or [lemonbar](https://github.com/LemonBoy/bar).
 
 Each part of the output is a module, and modbot is an agregator for these modules. You can query different information about your system like load average, CPU temperature, wireless SSID, and even the output of an arbitrary command or file.
 
