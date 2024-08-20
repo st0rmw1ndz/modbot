@@ -153,6 +153,9 @@ func main() {
 			mutex.Lock()
 			var combinedOutput string
 			for i, output := range moduleOutputs {
+				if output == "" {
+					continue
+				}
 				if i > 0 {
 					combinedOutput += delim
 				}

@@ -18,6 +18,7 @@ package readers
 
 import (
 	"bytes"
+	"errors"
 	"os/exec"
 	"strings"
 )
@@ -34,6 +35,10 @@ func readExec(command string) (interface{}, error) {
 
 	if err := cmd.Run(); err != nil {
 		return ExecInfo(""), err
+	}
+
+	if cmd.ProcessState.ExitCode() != 0 {
+		return ExecInfo(""), errors.New("returned non-zero exit code")
 	}
 
 	outputLines := strings.Split(stdout.String(), "\n")
