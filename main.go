@@ -18,6 +18,7 @@ package main
 
 import (
 	"bytes"
+	"flag"
 	"fmt"
 	"html/template"
 	"log"
@@ -26,6 +27,9 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/jezek/xgb"
+	"github.com/jezek/xgb/xproto"
 )
 
 var (
@@ -34,7 +38,15 @@ var (
 
 	mutex      sync.Mutex
 	lastOutput string
+
+	// X connection data
+	x    *xgb.Conn
+	root xproto.Window
 )
+
+type Flags struct {
+	SetXRootName bool
+}
 
 type Module struct {
 	Func     func() (interface{}, error)
@@ -85,7 +97,28 @@ func (m *Module) Run() {
 	mutex.Unlock()
 }
 
+func parseFlags() Flags {
+	var flags Flags
+	flag.BoolVar(&flags.SetXRootName, "x", false, "set x root window name")
+
+	flag.Parse()
+
+	return flags
+}
+
 func main() {
+	flags := parseFlags()
+
+	// Connect to X and get the root window if requested
+	if flags.SetXRootName {
+		var err error
+		x, err = xgb.NewConn()
+		if err != nil {
+			log.Fatalf("X connection failed: %s\n", err.Error())
+		}
+		root = xproto.Setup(x).DefaultScreen(x).Root
+	}
+
 	sigChan := make(chan os.Signal, 1024)
 	signalMap := make(map[os.Signal][]*Module)
 
@@ -126,8 +159,16 @@ func main() {
 			combinedOutput = prefix + combinedOutput + suffix
 			mutex.Unlock()
 
+			// Output to either X root window name or stdout based on flags
 			if combinedOutput != lastOutput {
-				fmt.Printf("%v\n", combinedOutput)
+				if flags.SetXRootName {
+					// Set the X root window name
+					outputBytes := []byte(combinedOutput)
+					xproto.ChangeProperty(x, xproto.PropModeReplace, root, xproto.AtomWmName, xproto.AtomString, 8, uint32(len(outputBytes)), outputBytes)
+				} else {
+					// Print to stdout
+					fmt.Printf("%v\n", combinedOutput)
+				}
 				lastOutput = combinedOutput
 			}
 		}
