@@ -29,7 +29,7 @@ type OsInfo struct {
 	Version    string
 }
 
-func ReadOs() (interface{}, error) {
+func readOs() (interface{}, error) {
 	const osPath = "/lib/os-release"
 
 	file, err := os.Open(osPath)
@@ -69,4 +69,10 @@ func ReadOs() (interface{}, error) {
 		PrettyName: osPrettyName,
 		Version:    osVersion,
 	}, nil
+}
+
+func ReadOs() func() (interface{}, error) {
+	return func() (interface{}, error) {
+		return readOs()
+	}
 }

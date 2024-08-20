@@ -33,7 +33,7 @@ func (l LoadInfo) String() string {
 	return fmt.Sprintf("%v %v %v", l.OneMinute, l.FiveMinute, l.FifteenMinute)
 }
 
-func ReadLoad() (interface{}, error) {
+func readLoad() (interface{}, error) {
 	const loadPath = "/proc/loadavg"
 
 	file, err := os.Open(loadPath)
@@ -59,4 +59,10 @@ func ReadLoad() (interface{}, error) {
 		FiveMinute:    fields[1],
 		FifteenMinute: fields[2],
 	}, nil
+}
+
+func ReadLoad() func() (interface{}, error) {
+	return func() (interface{}, error) {
+		return readLoad()
+	}
 }

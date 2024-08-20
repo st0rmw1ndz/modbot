@@ -14,39 +14,40 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package main
+package readers
 
 import (
-	"time"
-
-	"codeberg.org/frosty/modbot/lib/readers"
+	"bytes"
+	"os/exec"
+	"strings"
 )
 
-var (
-	delim  = "] ["
-	prefix = "["
-	suffix = "]"
-)
+type ExecInfo string
 
-var modules = []Module{
-	{
-		Func:     readers.ReadExec("statusbar cpu"),
-		Interval: 5 * time.Second,
-	},
-	{
-		Func:   readers.ReadExec("statusbar volume"),
-		Signal: 1,
-	},
-	{
-		Func:     readers.ReadExec("statusbar battery"),
-		Interval: 60 * time.Second,
-	},
-	{
-		Func:     readers.ReadExec("statusbar date"),
-		Interval: 1 * time.Second,
-	},
-	{
-		Func:     readers.ReadExec("statusbar loadavg"),
-		Interval: 5 * time.Second,
-	},
+func readExec(command string) (interface{}, error) {
+	args := []string{"sh", "-c", command}
+	var stdout, stderr bytes.Buffer
+
+	cmd := exec.Command(args[0], args[1:]...)
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	if err := cmd.Run(); err != nil {
+		return ExecInfo(""), err
+	}
+
+	outputLines := strings.Split(stdout.String(), "\n")
+	if len(outputLines) == 0 {
+		return ExecInfo(""), nil
+	}
+
+	outputString := outputLines[0]
+	return ExecInfo(outputString), nil
+
+}
+
+func ReadExec(command string) func() (interface{}, error) {
+	return func() (interface{}, error) {
+		return readExec(command)
+	}
 }

@@ -65,7 +65,7 @@ func (u UptimeInfo) String() string {
 	return builder.String()
 }
 
-func ReadUptime() (interface{}, error) {
+func readUptime() (interface{}, error) {
 	const uptimePath = "/proc/uptime"
 
 	file, err := os.Open(uptimePath)
@@ -91,4 +91,10 @@ func ReadUptime() (interface{}, error) {
 	}
 
 	return UptimeInfo(uptime), nil
+}
+
+func ReadUptime() func() (interface{}, error) {
+	return func() (interface{}, error) {
+		return readUptime()
+	}
 }

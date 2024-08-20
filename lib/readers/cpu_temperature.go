@@ -25,7 +25,7 @@ import (
 
 type CpuTemperatureInfo float32
 
-func ReadCpuTemperature(hwmonName, tempName string) (interface{}, error) {
+func readCpuTemperature(hwmonName, tempName string) (interface{}, error) {
 	tempPath := fmt.Sprintf("/sys/class/hwmon/%s/%s_input", hwmonName, tempName)
 
 	file, err := os.Open(tempPath)
@@ -48,4 +48,10 @@ func ReadCpuTemperature(hwmonName, tempName string) (interface{}, error) {
 	cpuTemperature := float32(cpuTemperatureMdeg) / 1000
 
 	return CpuTemperatureInfo(cpuTemperature), nil
+}
+
+func ReadCpuTemperature(hwmonName, tempName string) func() (interface{}, error) {
+	return func() (interface{}, error) {
+		return readCpuTemperature(hwmonName, tempName)
+	}
 }

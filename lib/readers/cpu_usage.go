@@ -34,7 +34,7 @@ func (cu CpuUsageInfo) String() string {
 	return fmt.Sprintf("%d%%", uint(cu.UsagePercent))
 }
 
-func ReadCpuUsage() (interface{}, error) {
+func readCpuUsage() (interface{}, error) {
 	file, err := os.Open("/proc/stat")
 	if err != nil {
 		return CpuUsageInfo{}, err
@@ -80,4 +80,10 @@ func ReadCpuUsage() (interface{}, error) {
 		Total:        cpuTotal,
 		UsagePercent: float64(cpuInUse) * 100 / float64(cpuTotal),
 	}, nil
+}
+
+func ReadCpuUsage() func() (interface{}, error) {
+	return func() (interface{}, error) {
+		return readCpuUsage()
+	}
 }

@@ -37,7 +37,7 @@ type MemoryInfo struct {
 	UsedPretty      string
 }
 
-func ReadMemory() (interface{}, error) {
+func readMemory() (interface{}, error) {
 	file, err := os.Open("/proc/meminfo")
 	if err != nil {
 		return MemoryInfo{}, err
@@ -88,4 +88,10 @@ func ReadMemory() (interface{}, error) {
 		AvailablePretty: ui.PrettifyKib(memAvailable, 2),
 		UsedPretty:      ui.PrettifyKib(memUsed, 2),
 	}, nil
+}
+
+func ReadMemory() func() (interface{}, error) {
+	return func() (interface{}, error) {
+		return readMemory()
+	}
 }
