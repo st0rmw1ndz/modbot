@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this prograb.  If not, see <https://www.gnu.org/licenses/>.
 
+// Credit to gocaudices (https://github.com/LordRusk/gocaudices) for the general outline of how to create the goroutines necessary, and for the X connection code.
+
 package main
 
 import (
