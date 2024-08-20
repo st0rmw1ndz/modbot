@@ -18,3 +18,46 @@ Some ideas for how special cases should be handled were taken from [mblocks](htt
 Usage of modbot:
   -x    set x root window name
 ```
+
+## Example
+
+### Configuration
+
+```go
+var (
+        delim  = "] ["
+        prefix = "["
+        suffix = "]"
+)
+
+var modules = []Module{
+        {
+                Func:     readers.ReadExec("statusbar cpu"),
+                Interval: 5 * time.Second,
+        },
+        {
+                Func:   readers.ReadExec("statusbar volume"),
+                Signal: 1,
+        },
+        {
+                Func:     readers.ReadExec("statusbar battery"),
+                Interval: 60 * time.Second,
+        },
+        {
+                Func:     readers.ReadExec("statusbar date"),
+                Interval: 1 * time.Second,
+        },
+        {
+                Func:     readers.ReadExec("statusbar loadavg"),
+                Interval: 5 * time.Second,
+        },
+}
+```
+
+### Output
+
+```
+[CPU 8%] [VOL 35%] [AC 71%] [23:04:02] [0.36]
+```
+
+*Do note that the output is arbitrary as the scripts are not part of the program.*
