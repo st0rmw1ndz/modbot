@@ -40,10 +40,6 @@ var modules = []Module{
 		Template: "BAT {{.Capacity}}%",
 	},
 	{
-		Func:   readers.ReadExec("monitors volume"),
-		Signal: 1,
-	},
-	{
 		Func:     readers.ReadDate("15:04:05"),
 		Interval: 1 * time.Second,
 	},
