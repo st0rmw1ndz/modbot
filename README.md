@@ -25,31 +25,31 @@ Usage of modbot:
 
 ```go
 var (
-        delim  = []byte("] [")
-        prefix = []byte("[")
-        suffix = []byte("]")
+	delim  = []byte("] [")
+	prefix = []byte("[")
+	suffix = []byte("]")
 )
 
 var modules = []Module{
-        {
-                Func:     readers.ReadCpuUsage(),
-                Interval: 5 * time.Second,
-                Template: `CPU {{printf "%.0f" .UsagePercent}}%`,
-        },
-        {
-                Func:     readers.ReadBattery("BAT1"),
-                Interval: 60 * time.Second,
-                Template: "BAT {{.Capacity}}%",
-        },
-        {
-                Func:     readers.ReadDate("15:04:05"),
-                Interval: 1 * time.Second,
-        },
-        {
-                Func:     readers.ReadLoad(),
-                Interval: 5 * time.Second,
-                Template: "{{.OneMinute}}",
-        },
+	{
+		Func:     readers.ReadCpuUsage(),
+		Interval: 5 * time.Second,
+		Template: `CPU {{printf "%.0f" .UsagePercent}}%`,
+	},
+	{
+		Func:     readers.ReadBattery("BAT1"),
+		Interval: 60 * time.Second,
+		Template: "BAT {{.Capacity}}%",
+	},
+	{
+		Func:     readers.ReadDate("15:04:05"),
+		Interval: 1 * time.Second,
+	},
+	{
+		Func:     readers.ReadLoad(),
+		Interval: 5 * time.Second,
+		Template: "{{.OneMinute}}",
+	},
 }
 ```
 
