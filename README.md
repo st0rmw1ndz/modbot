@@ -25,31 +25,30 @@ Usage of modbot:
 
 ```go
 var (
-        delim  = "] ["
-        prefix = "["
-        suffix = "]"
+        delim  = []byte("] [")
+        prefix = []byte("[")
+        suffix = []byte("]")
 )
 
 var modules = []Module{
         {
-                Func:     readers.ReadExec("statusbar cpu"),
+                Func:     readers.ReadCpuUsage(),
                 Interval: 5 * time.Second,
+                Template: `CPU {{printf "%.0f" .UsagePercent}}%`,
         },
         {
-                Func:   readers.ReadExec("statusbar volume"),
-                Signal: 1,
-        },
-        {
-                Func:     readers.ReadExec("statusbar battery"),
+                Func:     readers.ReadBattery("BAT1"),
                 Interval: 60 * time.Second,
+                Template: "BAT {{.Capacity}}%",
         },
         {
-                Func:     readers.ReadExec("statusbar date"),
+                Func:     readers.ReadDate("15:04:05"),
                 Interval: 1 * time.Second,
         },
         {
-                Func:     readers.ReadExec("statusbar loadavg"),
+                Func:     readers.ReadLoad(),
                 Interval: 5 * time.Second,
+                Template: "{{.OneMinute}}",
         },
 }
 ```
@@ -57,7 +56,5 @@ var modules = []Module{
 ### Output
 
 ```
-[CPU 8%] [VOL 35%] [AC 71%] [23:04:02] [0.36]
+[CPU 8%] [BAT 100%] [03:15:57] [0.62]
 ```
-
-*Do note that the output is arbitrary as the scripts are not part of the program.*
