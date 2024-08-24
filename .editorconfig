@@ -7,5 +7,4 @@ insert_final_newline = true
 
 [*.go]
 indent_style = tab
-indent_size = 8
-tab_width = 8
+indent_size = 4
