@@ -23,30 +23,33 @@ import (
 )
 
 var (
-	delim  = "] ["
-	prefix = "["
-	suffix = "]"
+	delim  = []byte("] [")
+	prefix = []byte("[")
+	suffix = []byte("]")
 )
 
 var modules = []Module{
 	{
-		Func:     readers.ReadExec("statusbar cpu"),
+		Func:     readers.ReadCpuUsage(),
 		Interval: 5 * time.Second,
+		Template: `CPU {{printf "%.0f" .UsagePercent}}%`,
 	},
 	{
-		Func:   readers.ReadExec("statusbar volume"),
+		Func:     readers.ReadBattery("BAT1"),
+		Interval: 60 * time.Second,
+		Template: "BAT {{.Capacity}}%",
+	},
+	{
+		Func:   readers.ReadExec("monitors volume"),
 		Signal: 1,
 	},
 	{
-		Func:     readers.ReadExec("statusbar battery"),
-		Interval: 60 * time.Second,
-	},
-	{
-		Func:     readers.ReadExec("statusbar date"),
+		Func:     readers.ReadDate("15:04:05"),
 		Interval: 1 * time.Second,
 	},
 	{
-		Func:     readers.ReadExec("statusbar loadavg"),
+		Func:     readers.ReadLoad(),
 		Interval: 5 * time.Second,
+		Template: "{{.OneMinute}}",
 	},
 }

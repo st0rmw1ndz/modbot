@@ -16,38 +16,15 @@
 
 package readers
 
-import (
-	"bufio"
-	"fmt"
-	"os"
-	"strconv"
-)
+import "time"
 
-type CpuTemperatureInfo float32
+type DateInfo string
 
-func ReadCpuTemperature(hwmonName, tempName string) func() (interface{}, error) {
+func ReadDate(format string) func() (interface{}, error) {
 	return func() (interface{}, error) {
-		tempPath := fmt.Sprintf("/sys/class/hwmon/%s/%s_input", hwmonName, tempName)
+		date := time.Now()
 
-		file, err := os.Open(tempPath)
-		if err != nil {
-			return 0, fmt.Errorf("failed to open %s: %w", tempPath, err)
-		}
-		defer file.Close()
-
-		scanner := bufio.NewScanner(file)
-		if !scanner.Scan() {
-			return 0, fmt.Errorf("failed to read from %s: %w", tempPath, scanner.Err())
-		}
-
-		line := scanner.Text()
-		cpuTemperatureMdeg, err := strconv.ParseUint(line, 10, 32)
-		if err != nil {
-			return 0, fmt.Errorf("failed to parse cpu temperature from %s: %w", tempPath, err)
-		}
-
-		cpuTemperature := float32(cpuTemperatureMdeg) / 1000
-
-		return CpuTemperatureInfo(cpuTemperature), nil
+		// Reference: https://gosamples.dev/date-time-format-cheatsheet/
+		return date.Format(format), nil
 	}
 }

@@ -116,62 +116,58 @@ func BatteryTechnologyFromStr(technologyStr string) BatteryTechnology {
 	return TechnologyUnknown
 }
 
-func readBattery(batteryName string) (interface{}, error) {
-	capacityPath := fmt.Sprintf("/sys/class/power_supply/%s/capacity", batteryName)
-	statusPath := fmt.Sprintf("/sys/class/power_supply/%s/status", batteryName)
-	technologyPath := fmt.Sprintf("/sys/class/power_supply/%s/technology", batteryName)
-
-	capacityFile, err := os.Open(capacityPath)
-	if err != nil {
-		return BatteryInfo{}, fmt.Errorf("failed to open %s: %w", capacityPath, err)
-	}
-	defer capacityFile.Close()
-
-	capacityScanner := bufio.NewScanner(capacityFile)
-	if !capacityScanner.Scan() {
-		return BatteryInfo{}, fmt.Errorf("failed to read from %s: %w", capacityPath, capacityScanner.Err())
-	}
-
-	statusFile, err := os.Open(statusPath)
-	if err != nil {
-		return BatteryInfo{}, fmt.Errorf("failed to open %s: %w", statusPath, err)
-	}
-	defer statusFile.Close()
-
-	statusScanner := bufio.NewScanner(statusFile)
-	if !statusScanner.Scan() {
-		return BatteryInfo{}, fmt.Errorf("failed to read from %s: %w", statusPath, statusScanner.Err())
-	}
-
-	technologyFile, err := os.Open(technologyPath)
-	if err != nil {
-		return BatteryInfo{}, fmt.Errorf("failed to open %s: %w", technologyPath, err)
-	}
-	defer technologyFile.Close()
-
-	technologyScanner := bufio.NewScanner(technologyFile)
-	if !technologyScanner.Scan() {
-		return BatteryInfo{}, fmt.Errorf("failed to read from %s: %w", technologyPath, technologyScanner.Err())
-	}
-
-	batteryCapacityStr := capacityScanner.Text()
-	batteryStatus := statusScanner.Text()
-	batteryTechnology := technologyScanner.Text()
-
-	batteryCapacity, err := strconv.ParseUint(batteryCapacityStr, 10, 8)
-	if err != nil {
-		return BatteryInfo{}, fmt.Errorf("failed to parse capacity from %s: %w", capacityPath, err)
-	}
-
-	return BatteryInfo{
-		Capacity:   uint8(batteryCapacity),
-		Status:     BatteryStatusFromStr(batteryStatus),
-		Technology: BatteryTechnologyFromStr(batteryTechnology),
-	}, nil
-}
-
 func ReadBattery(batteryName string) func() (interface{}, error) {
 	return func() (interface{}, error) {
-		return readBattery(batteryName)
+		capacityPath := fmt.Sprintf("/sys/class/power_supply/%s/capacity", batteryName)
+		statusPath := fmt.Sprintf("/sys/class/power_supply/%s/status", batteryName)
+		technologyPath := fmt.Sprintf("/sys/class/power_supply/%s/technology", batteryName)
+
+		capacityFile, err := os.Open(capacityPath)
+		if err != nil {
+			return BatteryInfo{}, fmt.Errorf("failed to open %s: %w", capacityPath, err)
+		}
+		defer capacityFile.Close()
+
+		capacityScanner := bufio.NewScanner(capacityFile)
+		if !capacityScanner.Scan() {
+			return BatteryInfo{}, fmt.Errorf("failed to read from %s: %w", capacityPath, capacityScanner.Err())
+		}
+
+		statusFile, err := os.Open(statusPath)
+		if err != nil {
+			return BatteryInfo{}, fmt.Errorf("failed to open %s: %w", statusPath, err)
+		}
+		defer statusFile.Close()
+
+		statusScanner := bufio.NewScanner(statusFile)
+		if !statusScanner.Scan() {
+			return BatteryInfo{}, fmt.Errorf("failed to read from %s: %w", statusPath, statusScanner.Err())
+		}
+
+		technologyFile, err := os.Open(technologyPath)
+		if err != nil {
+			return BatteryInfo{}, fmt.Errorf("failed to open %s: %w", technologyPath, err)
+		}
+		defer technologyFile.Close()
+
+		technologyScanner := bufio.NewScanner(technologyFile)
+		if !technologyScanner.Scan() {
+			return BatteryInfo{}, fmt.Errorf("failed to read from %s: %w", technologyPath, technologyScanner.Err())
+		}
+
+		batteryCapacityStr := capacityScanner.Text()
+		batteryStatus := statusScanner.Text()
+		batteryTechnology := technologyScanner.Text()
+
+		batteryCapacity, err := strconv.ParseUint(batteryCapacityStr, 10, 8)
+		if err != nil {
+			return BatteryInfo{}, fmt.Errorf("failed to parse capacity from %s: %w", capacityPath, err)
+		}
+
+		return BatteryInfo{
+			Capacity:   uint8(batteryCapacity),
+			Status:     BatteryStatusFromStr(batteryStatus),
+			Technology: BatteryTechnologyFromStr(batteryTechnology),
+		}, nil
 	}
 }

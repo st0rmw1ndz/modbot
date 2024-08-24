@@ -34,56 +34,52 @@ func (cu CpuUsageInfo) String() string {
 	return fmt.Sprintf("%d%%", uint(cu.UsagePercent))
 }
 
-func readCpuUsage() (interface{}, error) {
-	file, err := os.Open("/proc/stat")
-	if err != nil {
-		return CpuUsageInfo{}, err
-	}
-	defer file.Close()
-
-	var cpuInUse, cpuTotal uint64
-	scanner := bufio.NewScanner(file)
-
-	scanner.Scan()
-	for scanner.Scan() {
-		line := scanner.Text()
-
-		if !strings.HasPrefix(line, "cpu") {
-			break
-		}
-
-		var cpuN string
-		var cpuUser, cpuNice, cpuSystem, cpuIdle, cpuIoWait, cpuIrq, cpuSoftIrq uint64
-
-		_, err := fmt.Sscanf(line, "cpu%s %d %d %d %d %d %d %d",
-			&cpuN, &cpuUser, &cpuNice, &cpuSystem, &cpuIdle, &cpuIoWait, &cpuIrq, &cpuSoftIrq)
-		if err != nil {
-			return CpuUsageInfo{}, fmt.Errorf("failed to parse CPU stats: %w", err)
-		}
-
-		inUse := cpuUser + cpuNice + cpuSystem
-		total := inUse + cpuIdle + cpuIoWait + cpuIrq + cpuSoftIrq
-
-		cpuInUse += inUse
-		cpuTotal += total
-	}
-
-	if err := scanner.Err(); err != nil {
-		return CpuUsageInfo{}, err
-	}
-	if cpuTotal == 0 {
-		return CpuUsageInfo{}, errors.New("no CPU stats found")
-	}
-
-	return CpuUsageInfo{
-		InUse:        cpuInUse,
-		Total:        cpuTotal,
-		UsagePercent: float64(cpuInUse) * 100 / float64(cpuTotal),
-	}, nil
-}
-
 func ReadCpuUsage() func() (interface{}, error) {
 	return func() (interface{}, error) {
-		return readCpuUsage()
+		file, err := os.Open("/proc/stat")
+		if err != nil {
+			return CpuUsageInfo{}, err
+		}
+		defer file.Close()
+
+		var cpuInUse, cpuTotal uint64
+		scanner := bufio.NewScanner(file)
+
+		scanner.Scan()
+		for scanner.Scan() {
+			line := scanner.Text()
+
+			if !strings.HasPrefix(line, "cpu") {
+				break
+			}
+
+			var cpuN string
+			var cpuUser, cpuNice, cpuSystem, cpuIdle, cpuIoWait, cpuIrq, cpuSoftIrq uint64
+
+			_, err := fmt.Sscanf(line, "cpu%s %d %d %d %d %d %d %d",
+				&cpuN, &cpuUser, &cpuNice, &cpuSystem, &cpuIdle, &cpuIoWait, &cpuIrq, &cpuSoftIrq)
+			if err != nil {
+				return CpuUsageInfo{}, fmt.Errorf("failed to parse CPU stats: %w", err)
+			}
+
+			inUse := cpuUser + cpuNice + cpuSystem
+			total := inUse + cpuIdle + cpuIoWait + cpuIrq + cpuSoftIrq
+
+			cpuInUse += inUse
+			cpuTotal += total
+		}
+
+		if err := scanner.Err(); err != nil {
+			return CpuUsageInfo{}, err
+		}
+		if cpuTotal == 0 {
+			return CpuUsageInfo{}, errors.New("no CPU stats found")
+		}
+
+		return CpuUsageInfo{
+			InUse:        cpuInUse,
+			Total:        cpuTotal,
+			UsagePercent: float64(cpuInUse) * 100 / float64(cpuTotal),
+		}, nil
 	}
 }

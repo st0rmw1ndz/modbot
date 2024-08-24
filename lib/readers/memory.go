@@ -37,61 +37,57 @@ type MemoryInfo struct {
 	UsedPretty      string
 }
 
-func readMemory() (interface{}, error) {
-	file, err := os.Open("/proc/meminfo")
-	if err != nil {
-		return MemoryInfo{}, err
-	}
-	defer file.Close()
-
-	var memTotal, memAvailable, memUsed uint64
-	scanner := bufio.NewScanner(file)
-
-	for scanner.Scan() {
-		line := scanner.Text()
-		columns := strings.Fields(line)
-
-		if len(columns) < 2 {
-			continue
-		}
-
-		value, err := strconv.ParseUint(columns[1], 10, 64)
-		if err != nil {
-			return MemoryInfo{}, fmt.Errorf("failed to parse memory value: %w", err)
-		}
-
-		switch {
-		case strings.HasPrefix(line, "MemTotal:"):
-			memTotal = value
-		case strings.HasPrefix(line, "MemAvailable:"):
-			memAvailable = value
-		}
-	}
-
-	if err := scanner.Err(); err != nil {
-		return MemoryInfo{}, err
-	}
-	if memTotal == 0 {
-		return MemoryInfo{}, errors.New("missing MemTotal")
-	}
-	if memAvailable == 0 {
-		return MemoryInfo{}, errors.New("missing MemAvailable")
-	}
-
-	memUsed = memTotal - memAvailable
-	return MemoryInfo{
-		Total:     memTotal,
-		Available: memAvailable,
-		Used:      memUsed,
-
-		TotalPretty:     ui.PrettifyKib(memTotal, 2),
-		AvailablePretty: ui.PrettifyKib(memAvailable, 2),
-		UsedPretty:      ui.PrettifyKib(memUsed, 2),
-	}, nil
-}
-
 func ReadMemory() func() (interface{}, error) {
 	return func() (interface{}, error) {
-		return readMemory()
+		file, err := os.Open("/proc/meminfo")
+		if err != nil {
+			return MemoryInfo{}, err
+		}
+		defer file.Close()
+
+		var memTotal, memAvailable, memUsed uint64
+		scanner := bufio.NewScanner(file)
+
+		for scanner.Scan() {
+			line := scanner.Text()
+			columns := strings.Fields(line)
+
+			if len(columns) < 2 {
+				continue
+			}
+
+			value, err := strconv.ParseUint(columns[1], 10, 64)
+			if err != nil {
+				return MemoryInfo{}, fmt.Errorf("failed to parse memory value: %w", err)
+			}
+
+			switch {
+			case strings.HasPrefix(line, "MemTotal:"):
+				memTotal = value
+			case strings.HasPrefix(line, "MemAvailable:"):
+				memAvailable = value
+			}
+		}
+
+		if err := scanner.Err(); err != nil {
+			return MemoryInfo{}, err
+		}
+		if memTotal == 0 {
+			return MemoryInfo{}, errors.New("missing MemTotal")
+		}
+		if memAvailable == 0 {
+			return MemoryInfo{}, errors.New("missing MemAvailable")
+		}
+
+		memUsed = memTotal - memAvailable
+		return MemoryInfo{
+			Total:     memTotal,
+			Available: memAvailable,
+			Used:      memUsed,
+
+			TotalPretty:     ui.PrettifyKib(memTotal, 2),
+			AvailablePretty: ui.PrettifyKib(memAvailable, 2),
+			UsedPretty:      ui.PrettifyKib(memUsed, 2),
+		}, nil
 	}
 }

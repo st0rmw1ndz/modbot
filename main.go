@@ -36,10 +36,11 @@ import (
 
 var (
 	updateChan    = make(chan int)
-	moduleOutputs = make([]string, len(modules))
+	moduleOutputs = make([][]byte, len(modules))
+	mutex         sync.Mutex
 
-	mutex      sync.Mutex
-	lastOutput string
+	sigChan   = make(chan os.Signal, 1024)
+	signalMap = make(map[os.Signal][]*Module)
 
 	// X connection data
 	x    *xgb.Conn
@@ -62,130 +63,149 @@ type Module struct {
 
 func (m *Module) Run() {
 	if m.pos < 0 || m.pos >= len(modules) {
-		log.Printf("invalid module index %d\n", m.pos)
+		log.Printf("invalid module index: %d\n", m.pos)
 		return
 	}
+
+	var output bytes.Buffer
 
 	info, err := m.Func()
 	if err != nil {
-		moduleOutputs[m.pos] = "failed"
-		return
-	}
-
-	var output string
-	if m.Template != "" {
-		// Parse the output and apply the provided template
-		tmpl, err := template.New("module").Parse(m.Template)
-		if err != nil {
-			log.Printf("template parsing error: %v\n", err)
-			return
-		}
-
-		var buf bytes.Buffer
-		if err := tmpl.Execute(&buf, info); err != nil {
-			log.Printf("template execution error: %v\n", err)
-			return
-		}
-
-		output = buf.String()
+		output.WriteString("failed")
 	} else {
-		// Use the output as is
-		output = fmt.Sprintf("%v", info)
+		if m.Template != "" {
+			// Parse the output and apply the provided template
+			tmpl, err := template.New("module").Parse(m.Template)
+			if err != nil {
+				log.Printf("template parsing error: %v\n", err)
+				return
+			}
+
+			if err := tmpl.Execute(&output, info); err != nil {
+				log.Printf("template execution error: %v\n", err)
+				return
+			}
+		} else {
+			// Use the output as is
+			fmt.Fprintf(&output, "%v", info)
+		}
 	}
 
 	mutex.Lock()
-	moduleOutputs[m.pos] = output
+	moduleOutputs[m.pos] = output.Bytes()
 	updateChan <- 1
 	mutex.Unlock()
 }
 
-func parseFlags() Flags {
-	var flags Flags
-	flag.BoolVar(&flags.SetXRootName, "x", false, "set x root window name")
+func (m *Module) Init(pos int) {
+	m.pos = pos
 
-	flag.Parse()
+	if m.Signal != 0 {
+		sig := syscall.Signal(34 + m.Signal)
+		if _, exists := signalMap[sig]; !exists {
+			signal.Notify(sigChan, sig)
+		}
+		signalMap[sig] = append(signalMap[sig], m)
+	}
 
-	return flags
+	m.Run()
+	if m.Interval > 0 {
+		for {
+			time.Sleep(m.Interval)
+			m.Run()
+		}
+	}
+}
+
+func grabXRootWindow() (*xgb.Conn, xproto.Window, error) {
+	conn, err := xgb.NewConn()
+	if err != nil {
+		return nil, 0, err
+	}
+
+	root := xproto.Setup(conn).DefaultScreen(conn).Root
+	if conn == nil {
+		return nil, 0, fmt.Errorf("failed to create X connection")
+	}
+
+	return conn, root, nil
+}
+
+func createOutput(b *bytes.Buffer) {
+	b.Write(prefix)
+	first := true
+	for _, output := range moduleOutputs {
+		if output == nil {
+			continue
+		}
+		if !first {
+			b.Write(delim)
+		} else {
+			first = false
+		}
+		b.Write(output)
+	}
+	b.Write(suffix)
+}
+
+func monitorUpdates(setXRootName bool) {
+	var lastOutput []byte
+	var combinedOutput bytes.Buffer
+
+	for range updateChan {
+		mutex.Lock()
+		combinedOutput.Reset()
+		createOutput(&combinedOutput)
+		mutex.Unlock()
+
+		combinedOutputBytes := combinedOutput.Bytes()
+
+		if !bytes.Equal(combinedOutputBytes, lastOutput) {
+			if setXRootName {
+				// Set X root window name
+				xproto.ChangeProperty(x, xproto.PropModeReplace, root, xproto.AtomWmName, xproto.AtomString, 8, uint32(len(combinedOutputBytes)), combinedOutputBytes)
+			} else {
+				// Send to stdout
+				fmt.Printf("%s\n", combinedOutputBytes)
+			}
+			lastOutput = append([]byte(nil), combinedOutputBytes...)
+		}
+	}
+}
+
+func handleSignal(sig os.Signal) {
+	ms := signalMap[sig]
+	for _, m := range ms {
+		go m.Run()
+	}
 }
 
 func main() {
-	flags := parseFlags()
+	// Parse flags
+	var flags Flags
+	flag.BoolVar(&flags.SetXRootName, "x", false, "set x root window name")
+	flag.Parse()
 
-	// Connect to X and get the root window if requested
+	// Grab X root window if requested
 	if flags.SetXRootName {
 		var err error
-		x, err = xgb.NewConn()
+		x, root, err = grabXRootWindow()
 		if err != nil {
-			log.Fatalf("X connection failed: %s\n", err.Error())
+			log.Fatalf("error grabbing X root window: %v\n", err)
 		}
-		root = xproto.Setup(x).DefaultScreen(x).Root
+		defer x.Close()
 	}
-
-	sigChan := make(chan os.Signal, 1024)
-	signalMap := make(map[os.Signal][]*Module)
 
 	// Initialize modules
 	for i := range modules {
-		go func(m *Module, i int) {
-			m.pos = i
-
-			if m.Signal != 0 {
-				sig := syscall.Signal(34 + m.Signal)
-				if _, exists := signalMap[sig]; !exists {
-					signal.Notify(sigChan, sig)
-				}
-				signalMap[sig] = append(signalMap[sig], m)
-			}
-
-			m.Run()
-			if m.Interval > 0 {
-				for {
-					time.Sleep(m.Interval)
-					m.Run()
-				}
-			}
-		}(&modules[i], i)
+		go modules[i].Init(i)
 	}
 
-	// Update output on difference
-	go func() {
-		for range updateChan {
-			mutex.Lock()
-			var combinedOutput string
-			for i, output := range moduleOutputs {
-				if output == "" {
-					continue
-				}
-				if i > 0 {
-					combinedOutput += delim
-				}
-				combinedOutput += output
-			}
-			combinedOutput = prefix + combinedOutput + suffix
-			mutex.Unlock()
+	// Monitor changes to the combined output
+	go monitorUpdates(flags.SetXRootName)
 
-			// Output to either X root window name or stdout based on flags
-			if combinedOutput != lastOutput {
-				if flags.SetXRootName {
-					// Set the X root window name
-					outputBytes := []byte(combinedOutput)
-					xproto.ChangeProperty(x, xproto.PropModeReplace, root, xproto.AtomWmName, xproto.AtomString, 8, uint32(len(outputBytes)), outputBytes)
-				} else {
-					// Print to stdout
-					fmt.Printf("%v\n", combinedOutput)
-				}
-				lastOutput = combinedOutput
-			}
-		}
-	}()
-
-	// Handle module signals
+	// Handle signals sent for modules
 	for sig := range sigChan {
-		go func(sig *os.Signal) {
-			ms := signalMap[*sig]
-			for _, m := range ms {
-				go m.Run()
-			}
-		}(&sig)
+		go handleSignal(sig)
 	}
 }

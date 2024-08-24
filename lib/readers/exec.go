@@ -25,34 +25,31 @@ import (
 
 type ExecInfo string
 
-func readExec(command string) (interface{}, error) {
-	args := []string{"sh", "-c", command}
-	var stdout, stderr bytes.Buffer
-
-	cmd := exec.Command(args[0], args[1:]...)
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-
-	if err := cmd.Run(); err != nil {
-		return ExecInfo(""), err
-	}
-
-	if cmd.ProcessState.ExitCode() != 0 {
-		return ExecInfo(""), errors.New("returned non-zero exit code")
-	}
-
-	outputLines := strings.Split(stdout.String(), "\n")
-	if len(outputLines) == 0 {
-		return ExecInfo(""), nil
-	}
-
-	outputString := outputLines[0]
-	return ExecInfo(outputString), nil
-
-}
-
 func ReadExec(command string) func() (interface{}, error) {
 	return func() (interface{}, error) {
-		return readExec(command)
+		args := []string{"sh", "-c", command}
+		var stdout, stderr bytes.Buffer
+
+		cmd := exec.Command(args[0], args[1:]...)
+		cmd.Stdout = &stdout
+		cmd.Stderr = &stderr
+
+		if err := cmd.Run(); err != nil {
+			return ExecInfo(""), err
+		}
+		if cmd.ProcessState.ExitCode() != 0 {
+			return ExecInfo(""), errors.New("returned non-zero exit code")
+		}
+		if len(stderr.String()) > 0 {
+			return ExecInfo(""), errors.New("data in stderr found")
+		}
+
+		outputLines := strings.Split(stdout.String(), "\n")
+		if len(outputLines) == 0 {
+			return ExecInfo(""), nil
+		}
+
+		outputString := outputLines[0]
+		return ExecInfo(outputString), nil
 	}
 }

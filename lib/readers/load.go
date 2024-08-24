@@ -33,36 +33,32 @@ func (l LoadInfo) String() string {
 	return fmt.Sprintf("%v %v %v", l.OneMinute, l.FiveMinute, l.FifteenMinute)
 }
 
-func readLoad() (interface{}, error) {
-	const loadPath = "/proc/loadavg"
-
-	file, err := os.Open(loadPath)
-	if err != nil {
-		return LoadInfo{}, fmt.Errorf("failed to open %s: %w", loadPath, err)
-	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-	scanner.Scan()
-	if err := scanner.Err(); err != nil {
-		return LoadInfo{}, fmt.Errorf("failed to read from %s: %w", loadPath, err)
-	}
-
-	line := scanner.Text()
-	fields := strings.Fields(line)
-	if len(fields) < 3 {
-		return LoadInfo{}, fmt.Errorf("unexpected format in %s: %s", loadPath, line)
-	}
-
-	return LoadInfo{
-		OneMinute:     fields[0],
-		FiveMinute:    fields[1],
-		FifteenMinute: fields[2],
-	}, nil
-}
-
 func ReadLoad() func() (interface{}, error) {
 	return func() (interface{}, error) {
-		return readLoad()
+		const loadPath = "/proc/loadavg"
+
+		file, err := os.Open(loadPath)
+		if err != nil {
+			return LoadInfo{}, fmt.Errorf("failed to open %s: %w", loadPath, err)
+		}
+		defer file.Close()
+
+		scanner := bufio.NewScanner(file)
+		scanner.Scan()
+		if err := scanner.Err(); err != nil {
+			return LoadInfo{}, fmt.Errorf("failed to read from %s: %w", loadPath, err)
+		}
+
+		line := scanner.Text()
+		fields := strings.Fields(line)
+		if len(fields) < 3 {
+			return LoadInfo{}, fmt.Errorf("unexpected format in %s: %s", loadPath, line)
+		}
+
+		return LoadInfo{
+			OneMinute:     fields[0],
+			FiveMinute:    fields[1],
+			FifteenMinute: fields[2],
+		}, nil
 	}
 }

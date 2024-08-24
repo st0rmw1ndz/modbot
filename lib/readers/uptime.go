@@ -65,36 +65,32 @@ func (u UptimeInfo) String() string {
 	return builder.String()
 }
 
-func readUptime() (interface{}, error) {
-	const uptimePath = "/proc/uptime"
-
-	file, err := os.Open(uptimePath)
-	if err != nil {
-		return 0, fmt.Errorf("failed to open %s: %w", uptimePath, err)
-	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-	if !scanner.Scan() {
-		return 0, fmt.Errorf("failed to read from %s: %w", uptimePath, scanner.Err())
-	}
-
-	line := scanner.Text()
-	fields := strings.SplitN(line, ".", 2)
-	if len(fields) < 1 {
-		return 0, fmt.Errorf("unexpected format in %s: %s", uptimePath, line)
-	}
-
-	uptime, err := strconv.ParseUint(fields[0], 10, 64)
-	if err != nil {
-		return 0, fmt.Errorf("failed to parse uptime from %s: %w", uptimePath, err)
-	}
-
-	return UptimeInfo(uptime), nil
-}
-
 func ReadUptime() func() (interface{}, error) {
 	return func() (interface{}, error) {
-		return readUptime()
+		const uptimePath = "/proc/uptime"
+
+		file, err := os.Open(uptimePath)
+		if err != nil {
+			return 0, fmt.Errorf("failed to open %s: %w", uptimePath, err)
+		}
+		defer file.Close()
+
+		scanner := bufio.NewScanner(file)
+		if !scanner.Scan() {
+			return 0, fmt.Errorf("failed to read from %s: %w", uptimePath, scanner.Err())
+		}
+
+		line := scanner.Text()
+		fields := strings.SplitN(line, ".", 2)
+		if len(fields) < 1 {
+			return 0, fmt.Errorf("unexpected format in %s: %s", uptimePath, line)
+		}
+
+		uptime, err := strconv.ParseUint(fields[0], 10, 64)
+		if err != nil {
+			return 0, fmt.Errorf("failed to parse uptime from %s: %w", uptimePath, err)
+		}
+
+		return UptimeInfo(uptime), nil
 	}
 }
