@@ -40,7 +40,6 @@ var (
 	sigChan   = make(chan os.Signal, 1024)
 	signalMap = make(map[os.Signal][]*Module)
 
-	// X connection data
 	x    *xgb.Conn
 	root xproto.Window
 )
@@ -55,7 +54,6 @@ type Module struct {
 	Template string
 	Signal   int
 
-	// Internal
 	pos int
 }
 
@@ -72,7 +70,6 @@ func (m *Module) Run() {
 		output.WriteString("failed")
 	} else {
 		if m.Template != "" {
-			// Parse the output and apply the provided template
 			tmpl, err := template.New("module").Parse(m.Template)
 			if err != nil {
 				log.Printf("template parsing error: %v\n", err)
@@ -84,7 +81,6 @@ func (m *Module) Run() {
 				return
 			}
 		} else {
-			// Use the output as is
 			fmt.Fprintf(&output, "%v", info)
 		}
 	}
@@ -155,10 +151,8 @@ func monitorUpdates(setXRootName bool) {
 
 		if !bytes.Equal(combinedOutputBytes, lastOutput) {
 			if setXRootName {
-				// Set X root window name
 				xproto.ChangeProperty(x, xproto.PropModeReplace, root, xproto.AtomWmName, xproto.AtomString, 8, uint32(len(combinedOutputBytes)), combinedOutputBytes)
 			} else {
-				// Send to stdout
 				fmt.Printf("%s\n", combinedOutputBytes)
 			}
 			lastOutput = append([]byte(nil), combinedOutputBytes...)
@@ -174,12 +168,10 @@ func handleSignal(sig os.Signal) {
 }
 
 func main() {
-	// Parse flags
 	var flags Flags
 	flag.BoolVar(&flags.SetXRootName, "x", false, "set x root window name")
 	flag.Parse()
 
-	// Grab X root window if requested
 	if flags.SetXRootName {
 		var err error
 		x, root, err = grabXRootWindow()
@@ -189,15 +181,12 @@ func main() {
 		defer x.Close()
 	}
 
-	// Initialize modules
 	for i := range modules {
 		go modules[i].Init(i)
 	}
 
-	// Monitor changes to the combined output
 	go monitorUpdates(flags.SetXRootName)
 
-	// Handle signals sent for modules
 	for sig := range sigChan {
 		go handleSignal(sig)
 	}
