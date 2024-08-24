@@ -26,7 +26,6 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"sync"
 	"syscall"
 	"time"
 
@@ -37,7 +36,6 @@ import (
 var (
 	updateChan    = make(chan int)
 	moduleOutputs = make([][]byte, len(modules))
-	mutex         sync.Mutex
 
 	sigChan   = make(chan os.Signal, 1024)
 	signalMap = make(map[os.Signal][]*Module)
@@ -91,10 +89,8 @@ func (m *Module) Run() {
 		}
 	}
 
-	mutex.Lock()
 	moduleOutputs[m.pos] = output.Bytes()
 	updateChan <- 1
-	mutex.Unlock()
 }
 
 func (m *Module) Init(pos int) {
@@ -153,11 +149,8 @@ func monitorUpdates(setXRootName bool) {
 	var combinedOutput bytes.Buffer
 
 	for range updateChan {
-		mutex.Lock()
 		combinedOutput.Reset()
 		createOutput(&combinedOutput)
-		mutex.Unlock()
-
 		combinedOutputBytes := combinedOutput.Bytes()
 
 		if !bytes.Equal(combinedOutputBytes, lastOutput) {
