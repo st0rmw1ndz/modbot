@@ -19,42 +19,8 @@ Usage of modbot:
   -x    set x root window name
 ```
 
-## Example
+## Information
 
-### Configuration
-
-```go
-var (
-	delim  = []byte("] [")
-	prefix = []byte("[")
-	suffix = []byte("]")
-)
-
-var modules = []Module{
-	{
-		Func:     readers.ReadCpuUsage(),
-		Interval: 5 * time.Second,
-		Template: `CPU {{printf "%.0f" .UsagePercent}}%`,
-	},
-	{
-		Func:     readers.ReadBattery("BAT1"),
-		Interval: 60 * time.Second,
-		Template: "BAT {{.Capacity}}%",
-	},
-	{
-		Func:     readers.ReadDate("15:04:05"),
-		Interval: 1 * time.Second,
-	},
-	{
-		Func:     readers.ReadLoad(),
-		Interval: 5 * time.Second,
-		Template: "{{.OneMinute}}",
-	},
-}
-```
-
-### Output
-
-```
-[CPU 8%] [BAT 100%] [03:15:57] [0.62]
-```
+* If an empty string is returned from a module, then the corresponding module will not be displayed.
+* If a module returns a non-`nil` value for its error, or if the exit code of an exec module is non-zero, then `failed` will be shown for the corresponding module.
+* Modules can be updated on an interval, signal, or both.
