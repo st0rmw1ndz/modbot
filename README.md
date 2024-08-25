@@ -24,3 +24,9 @@ Usage of modbot:
 * If an empty string is returned from a module, then the corresponding module will not be displayed.
 * If a module returns a non-`nil` value for its error, or if the exit code of an exec module is non-zero, then `failed` will be shown for the corresponding module.
 * Modules can be updated on an interval, signal, or both.
+
+## TODO
+
+* Iterate over the batteries found if a battery wasn't specified
+* Do more testing if the current async implementation is safe
+* Implement `disk_io` and `disk_usage` modules
