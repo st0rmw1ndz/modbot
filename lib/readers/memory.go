@@ -2,16 +2,16 @@
 // Copyright (C) 2024 frosty <inthishouseofcards@gmail.com>
 //
 // This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Affero General Public License as published
-// by the Free Software Foundation, either version 3 of the License, or
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Affero General Public License for more details.
+// GNU General Public License for more details.
 //
-// You should have received a copy of the GNU Affero General Public License
+// You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 package readers
@@ -39,7 +39,9 @@ type MemoryInfo struct {
 
 func ReadMemory() func() (interface{}, error) {
 	return func() (interface{}, error) {
-		file, err := os.Open("/proc/meminfo")
+		const memoryFile = "/proc/meminfo"
+
+		file, err := os.Open(memoryFile)
 		if err != nil {
 			return MemoryInfo{}, err
 		}
@@ -85,9 +87,9 @@ func ReadMemory() func() (interface{}, error) {
 			Available: memAvailable,
 			Used:      memUsed,
 
-			TotalPretty:     ui.PrettifyKib(memTotal, 2),
-			AvailablePretty: ui.PrettifyKib(memAvailable, 2),
-			UsedPretty:      ui.PrettifyKib(memUsed, 2),
+			TotalPretty:     ui.PrettifyKib(memTotal, 1),
+			AvailablePretty: ui.PrettifyKib(memAvailable, 1),
+			UsedPretty:      ui.PrettifyKib(memUsed, 1),
 		}, nil
 	}
 }
