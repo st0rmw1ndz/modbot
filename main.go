@@ -73,12 +73,11 @@ func (m *Module) Run() {
 			tmpl, err := template.New("module").Parse(m.Template)
 			if err != nil {
 				log.Printf("template parsing error: %v\n", err)
-				return
+				output.WriteString("failed")
 			}
-
 			if err := tmpl.Execute(&output, info); err != nil {
 				log.Printf("template execution error: %v\n", err)
-				return
+				output.WriteString("failed")
 			}
 		} else {
 			fmt.Fprintf(&output, "%v", info)
