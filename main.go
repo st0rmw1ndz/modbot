@@ -140,7 +140,7 @@ func createOutput(b *bytes.Buffer) {
 	b.Write(suffix)
 }
 
-func monitorUpdates(setXRootName bool) {
+func monitorUpdates(outputHandler func([]byte)) {
 	var lastOutput []byte
 	var combinedOutput bytes.Buffer
 
@@ -150,11 +150,7 @@ func monitorUpdates(setXRootName bool) {
 		combinedOutputBytes := combinedOutput.Bytes()
 
 		if !bytes.Equal(combinedOutputBytes, lastOutput) {
-			if setXRootName {
-				xproto.ChangeProperty(x, xproto.PropModeReplace, root, xproto.AtomWmName, xproto.AtomString, 8, uint32(len(combinedOutputBytes)), combinedOutputBytes)
-			} else {
-				fmt.Printf("%s\n", combinedOutputBytes)
-			}
+			outputHandler(combinedOutputBytes)
 			lastOutput = append([]byte(nil), combinedOutputBytes...)
 		}
 	}
@@ -185,7 +181,13 @@ func main() {
 		go modules[i].Init(i)
 	}
 
-	go monitorUpdates(flags.SetXRootName)
+	go monitorUpdates(func(combinedOutputBytes []byte) {
+		if flags.SetXRootName {
+			xproto.ChangeProperty(x, xproto.PropModeReplace, root, xproto.AtomWmName, xproto.AtomString, 8, uint32(len(combinedOutputBytes)), combinedOutputBytes)
+		} else {
+			fmt.Printf("%s\n", combinedOutputBytes)
+		}
+	})
 
 	for sig := range sigChan {
 		go handleSignal(sig)
